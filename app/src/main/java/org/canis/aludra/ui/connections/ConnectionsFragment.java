@@ -64,7 +64,8 @@ public class ConnectionsFragment extends Fragment {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                doIt();
+                DialogFragment newFragment = new NewConnectionFragment();
+                newFragment.show(getParentFragmentManager(), "connections");
             }
         });
 
@@ -76,11 +77,6 @@ public class ConnectionsFragment extends Fragment {
         super.onActivityCreated(savedInstanceState);
 //        mViewModel = new ViewModelProvider(this).get(ConnectionsViewModel.class);
         // TODO: Use the ViewModel
-    }
-
-    public void doIt() {
-        DialogFragment newFragment = new NewConnectionFragment();
-        newFragment.show(getParentFragmentManager(), "connections");
     }
 
     private static class ConnectionArrayAdapter extends ArrayAdapter<Connection> {
