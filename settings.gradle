@@ -1,0 +1,3 @@
+include ':aries-agentx'
+include ':app'
+rootProject.name = "Aludra"

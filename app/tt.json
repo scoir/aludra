@@ -1,0 +1,18 @@
+{
+  "result": [
+    {
+      "name": "urn:uuid:cc141a29-b002-4ccb-86e6-03f5ff73efd2",
+      "id": "urn:uuid:cc141a29-b002-4ccb-86e6-03f5ff73efd2",
+      "context": [
+        "https://www.w3.org/2018/credentials/v1",
+        "https://schema.org/docs/jsonldcontext.json"
+      ],
+      "type": [
+        "VerifiableCredential",
+        "Course"
+      ],
+      "my_did": "did:peer:1zQmUpE7ZhYMjbLrpBBEwKDn2WiP6uYCWkA81pmexxQ57ioB",
+      "their_did": "did:peer:1zQmd3b6bgeZUAXdpToPRgSnRVfcUWr3GEcB1L4i7Jszrfhn"
+    }
+  ]
+}
