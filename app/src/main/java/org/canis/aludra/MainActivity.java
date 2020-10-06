@@ -17,6 +17,7 @@ import org.canis.aludra.model.Connection;
 import org.canis.aludra.model.Credential;
 import org.canis.aludra.model.QueryConnectionResults;
 import org.canis.aludra.model.QueryCredentialResults;
+import org.canis.aludra.ui.connections.AcceptConnectionFragment;
 import org.canis.aludra.ui.connections.DIDExchangeHandler;
 import org.canis.aludra.ui.connections.NewConnectionFragment;
 import org.canis.aludra.ui.credentials.IssueCredentialHandler;
@@ -34,7 +35,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class MainActivity extends AppCompatActivity implements NewConnectionFragment.NewConnectionDialogListener {
+public class MainActivity extends AppCompatActivity implements
+        NewConnectionFragment.NewConnectionDialogListener,
+        DIDExchangeHandler.DIDExchangeCallback,
+        AcceptConnectionFragment.AcceptConnectionDialogListener{
 
     AriesController agent;
     DIDExchangeHandler didExchangeHandler;
@@ -64,7 +68,7 @@ public class MainActivity extends AppCompatActivity implements NewConnectionFrag
 
         try {
             agent = Ariesagent.new_(opts);
-            didExchangeHandler = new DIDExchangeHandler(agent.getDIDExchangeController());
+            didExchangeHandler = new DIDExchangeHandler(agent.getDIDExchangeController(), this);
             issueCredHandler = new IssueCredentialHandler(agent.getIssueCredentialController());
 
             // create an aries agent instance
@@ -79,10 +83,8 @@ public class MainActivity extends AppCompatActivity implements NewConnectionFrag
     }
 
     @Override
-    public void onDialogPositiveClick(String invitation) {
+    public void onInvite(String invitation) {
         // create options
-
-
         ResponseEnvelope res = new ResponseEnvelope();
         try {
             // create a controller
@@ -105,7 +107,7 @@ public class MainActivity extends AppCompatActivity implements NewConnectionFrag
     }
 
     @Override
-    public void onDialogNegativeClick(DialogFragment dialog) {
+    public void onCancel(DialogFragment dialog) {
 
     }
 
@@ -173,4 +175,19 @@ public class MainActivity extends AppCompatActivity implements NewConnectionFrag
         return out;
     }
 
+    @Override
+    public void onInvited(String connectionID, String label) {
+        DialogFragment newFragment = new AcceptConnectionFragment(connectionID, label);
+        newFragment.show(getSupportFragmentManager(), "connections");
+    }
+
+    @Override
+    public void onAcceptClick(String connectionID) {
+        didExchangeHandler.Continue(connectionID, "");
+    }
+
+    @Override
+    public void onCancelClick(DialogFragment dialog) {
+
+    }
 }

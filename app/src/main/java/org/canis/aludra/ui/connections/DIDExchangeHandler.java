@@ -5,6 +5,7 @@ import android.os.Build;
 import android.util.Log;
 
 import androidx.annotation.RequiresApi;
+import androidx.fragment.app.DialogFragment;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -26,9 +27,15 @@ public class DIDExchangeHandler implements Handler {
 
     String lastTopic, lastMessage;
     DIDExchangeController ctrl;
+    DIDExchangeCallback cb;
 
-    public DIDExchangeHandler(DIDExchangeController c) {
+    public interface DIDExchangeCallback {
+        void onInvited(String connectionID, String label);
+    }
+
+    public DIDExchangeHandler(DIDExchangeController c, DIDExchangeCallback cb) {
         this.ctrl = c;
+        this.cb = cb;
     }
 
     public String getLastNotification() {
@@ -52,28 +59,33 @@ public class DIDExchangeHandler implements Handler {
         Log.d("received notification message STATE: ", msg.message.StateID);
 
         if (msg.message.StateID.equals("invited") && msg.message.Type.equals("post_state")) {
-            try {
-                StringBuilder sb = new StringBuilder();
-                Formatter formatter = new Formatter(sb, Locale.US);
-                String accept = formatter.format("{\"id\": \"%s\"}", msg.message.getConnectionID()).toString();
-                Log.d("accept", accept);
-                byte[] data = accept.getBytes(StandardCharsets.US_ASCII);
-
-                System.out.println(new String(data));
-
-                RequestEnvelope env = new RequestEnvelope(null);
-                env.setPayload(data);
-                ResponseEnvelope res = ctrl.acceptInvitation(env);
-                if(res.getError() != null && !res.getError().getMessage().isEmpty()) {
-                    Log.d("failed to accept invitation: ", res.getError().toString());
-                } else {
-                    String receiveInvitationResponse = new String(res.getPayload(), StandardCharsets.UTF_8);
-                    Log.d("accepting invitation with: ", receiveInvitationResponse);
-                }
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            cb.onInvited(msg.message.getConnectionID(), msg.message.message.label);
         }
     }
+
+    public void Continue(String connectionID, String name) {
+        try {
+            StringBuilder sb = new StringBuilder();
+            Formatter formatter = new Formatter(sb, Locale.US);
+            String accept = formatter.format("{\"id\": \"%s\"}", connectionID).toString();
+            Log.d("accept", accept);
+            byte[] data = accept.getBytes(StandardCharsets.US_ASCII);
+
+            System.out.println(new String(data));
+
+            RequestEnvelope env = new RequestEnvelope(null);
+            env.setPayload(data);
+            ResponseEnvelope res = ctrl.acceptInvitation(env);
+            if(res.getError() != null && !res.getError().getMessage().isEmpty()) {
+                Log.d("failed to accept invitation: ", res.getError().toString());
+            } else {
+                String receiveInvitationResponse = new String(res.getPayload(), StandardCharsets.UTF_8);
+                Log.d("accepting invitation with: ", receiveInvitationResponse);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 }
