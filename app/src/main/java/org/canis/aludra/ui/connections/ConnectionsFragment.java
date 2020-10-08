@@ -34,12 +34,12 @@ import org.hyperledger.aries.models.ResponseEnvelope;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
-public class ConnectionsFragment extends Fragment implements NewConnectionFragment.NewConnectionDialogListener,
-        DIDExchangeHandler.DIDExchangeCallback, AcceptConnectionFragment.AcceptConnectionDialogListener {
+public class ConnectionsFragment extends Fragment implements DIDExchangeHandler.DIDExchangeCallback, AcceptConnectionFragment.AcceptConnectionDialogListener, ScanInvitationFragment.ScanInvitationListener {
 
     ConnectionsViewModel mViewModel;
     DIDExchangeController didExchangeController;
@@ -62,7 +62,6 @@ public class ConnectionsFragment extends Fragment implements NewConnectionFragme
         listview.setAdapter(adapter);
 
         listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-
             @Override
             public void onItemClick(AdapterView<?> parent, final View view,
                                     int position, long id) {
@@ -73,8 +72,9 @@ public class ConnectionsFragment extends Fragment implements NewConnectionFragme
         FloatingActionButton fab = root.findViewById(R.id.floatingActionButton);
         fab.setOnClickListener(view -> {
             Navigation.findNavController(view).navigate(R.id.action_connections_to_scan);
-            //                DialogFragment newFragment = new NewConnectionFragment();
-//                newFragment.show(getParentFragmentManager(), "connections");
+//            ScanInvitationFragment scanFrag  = (ScanInvitationFragment) mainActivity.getSupportFragmentManager().findFragmentById(R.id.scanConnectionFragment);
+//            scanFrag.setScanInvitationListener(this);
+
         });
 
         mViewModel = new ViewModelProvider(this).get(ConnectionsViewModel.class);
@@ -102,18 +102,19 @@ public class ConnectionsFragment extends Fragment implements NewConnectionFragme
             e.printStackTrace();
         }
 
-
+        mainActivity.setScanInvitationListener(this);
         return root;
     }
 
     @Override
-    public void onInvite(String invitation) {
-        // create options
+    public void onScanSuccess(String invitation) {
         ResponseEnvelope res;
         try {
-            // perform an operation
             byte[] data = invitation.getBytes(StandardCharsets.UTF_8);
-            res = didExchangeController.receiveInvitation(new RequestEnvelope(data));
+            byte[] decoded = Base64.getDecoder().decode(data);
+
+
+            res = didExchangeController.receiveInvitation(new RequestEnvelope(decoded));
             if (res.getError() != null) {
                 CommandError err = res.getError();
                 System.out.println(err.toString());
@@ -124,11 +125,6 @@ public class ConnectionsFragment extends Fragment implements NewConnectionFragme
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-    }
-
-    @Override
-    public void onCancel(DialogFragment dialog) {
 
     }
 

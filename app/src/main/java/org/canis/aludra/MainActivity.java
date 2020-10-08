@@ -1,13 +1,10 @@
 package org.canis.aludra;
 
-import android.Manifest;
-import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
+import androidx.fragment.app.Fragment;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
@@ -15,14 +12,17 @@ import androidx.navigation.ui.NavigationUI;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
+import org.canis.aludra.ui.connections.ConnectionsFragment;
+import org.canis.aludra.ui.connections.ScanInvitationFragment;
 import org.hyperledger.aries.api.AriesController;
 import org.hyperledger.aries.ariesagent.Ariesagent;
 import org.hyperledger.aries.config.Options;
 
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity  {
 
     AriesController agent;
+    ScanInvitationFragment.ScanInvitationListener scanInvitationListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,12 +51,18 @@ public class MainActivity extends AppCompatActivity {
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(navView, navController);
 
+    }
 
+    public void setScanInvitationListener(ScanInvitationFragment.ScanInvitationListener scanInvitationListener) {
+        this.scanInvitationListener = scanInvitationListener;
+    }
+
+    public ScanInvitationFragment.ScanInvitationListener getScanInvitationListener() {
+        return scanInvitationListener;
     }
 
     public AriesController getAgent() {
         return agent;
     }
-
 
 }

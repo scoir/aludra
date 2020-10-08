@@ -27,7 +27,7 @@
         tools:layout="@layout/credentials_fragment" />
     <fragment
         android:id="@+id/scanConnectionFragment"
-        android:name="org.canis.aludra.ui.connections.ScanConnectionFragment"
+        android:name="org.canis.aludra.ui.connections.ScanInvitationFragment"
         android:label="@string/scan_qrcode_invitation"
         tools:layout="@layout/scan_connection_fragment" />
 </navigation>

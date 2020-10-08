@@ -1,6 +1,7 @@
 package org.canis.aludra.ui.connections;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
@@ -9,7 +10,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -33,7 +33,7 @@ import org.canis.aludra.R;
 
 import java.util.concurrent.ExecutionException;
 
-public class ScanConnectionFragment extends Fragment {
+public class ScanInvitationFragment extends Fragment {
 
     private static final int PERMISSION_REQUEST_CAMERA = 0;
 
@@ -43,7 +43,15 @@ public class ScanConnectionFragment extends Fragment {
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
     private Button qrCodeFoundButton;
     private String qrCode;
+    private ScanInvitationListener listener;
 
+    public interface ScanInvitationListener {
+        void onScanSuccess(String invitation);
+    }
+
+    public void setScanInvitationListener(ScanInvitationListener listener) {
+        this.listener = listener;
+    }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -56,14 +64,26 @@ public class ScanConnectionFragment extends Fragment {
         qrCodeFoundButton = root.findViewById(R.id.activity_main_qrCodeFoundButton);
         qrCodeFoundButton.setVisibility(View.INVISIBLE);
         qrCodeFoundButton.setOnClickListener(v -> {
-            Toast.makeText(getActivity(), qrCode, Toast.LENGTH_SHORT).show();
-            Log.i(MainActivity.class.getSimpleName(), "QR Code Found: " + qrCode);
+            if (listener != null) {
+                listener.onScanSuccess(qrCode);
+                getActivity().getFragmentManager().popBackStack();
+            } else {
+                Toast.makeText(getActivity(), qrCode, Toast.LENGTH_SHORT).show();
+                Log.i(MainActivity.class.getSimpleName(), "QR Code Found: " + qrCode);
+            }
         });
 
         cameraProviderFuture = ProcessCameraProvider.getInstance(getActivity());
         requestCamera();
 
         return root;
+    }
+
+    @Override
+    public void onAttach(@NonNull Context context) {
+        super.onAttach(context);
+        MainActivity mainActivity = (MainActivity)context;
+        setScanInvitationListener(mainActivity.getScanInvitationListener());
     }
 
     @Override
