@@ -9,4 +9,6 @@
     <string name="cancel">Cancel</string>
     <string name="create">Create</string>
     <string name="accept_credential">Accept Credential?</string>
+    <string name="scan_qrcode_invitation">Scan QR Code Invitation</string>
+    <string name="qr_code_found">QR Code Found</string>
 </resources>

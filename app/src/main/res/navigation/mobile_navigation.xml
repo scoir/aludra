@@ -15,10 +15,19 @@
         android:id="@+id/navigation_connections"
         android:name="org.canis.aludra.ui.connections.ConnectionsFragment"
         android:label="@string/title_connections"
-        tools:layout="@layout/connections_fragment" />
+        tools:layout="@layout/connections_fragment" >
+        <action
+            android:id="@+id/action_connections_to_scan"
+            app:destination="@id/scanConnectionFragment" />
+    </fragment>
     <fragment
         android:id="@+id/navigation_credentials"
         android:name="org.canis.aludra.ui.credentials.CredentialsFragment"
         android:label="@string/title_credentials"
         tools:layout="@layout/credentials_fragment" />
+    <fragment
+        android:id="@+id/scanConnectionFragment"
+        android:name="org.canis.aludra.ui.connections.ScanConnectionFragment"
+        android:label="@string/scan_qrcode_invitation"
+        tools:layout="@layout/scan_connection_fragment" />
 </navigation>

@@ -2,8 +2,6 @@ package org.canis.aludra.ui.connections;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.content.Context;
-import android.content.DialogInterface;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -47,17 +45,11 @@ public class NewConnectionFragment extends DialogFragment {
         // Pass null as the parent view because its going in the dialog layout
         builder.setView(binding.getRoot());
         builder.setMessage(R.string.paste_invitation)
-                .setPositiveButton(R.string.create, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        binding.executePendingBindings();
-                        listener.onInvite(binding.getInvitation());
-                    }
+                .setPositiveButton(R.string.create, (dialog, id) -> {
+                    binding.executePendingBindings();
+                    listener.onInvite(binding.getInvitation());
                 })
-                .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        listener.onCancel(NewConnectionFragment.this);
-                    }
-                });
+                .setNegativeButton(R.string.cancel, (dialog, id) -> listener.onCancel(NewConnectionFragment.this));
         // Create the AlertDialog object and return it
         return builder.create();
     }

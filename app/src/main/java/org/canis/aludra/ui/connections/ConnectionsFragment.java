@@ -16,6 +16,7 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.Navigation;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.gson.Gson;
@@ -65,25 +66,15 @@ public class ConnectionsFragment extends Fragment implements NewConnectionFragme
             @Override
             public void onItemClick(AdapterView<?> parent, final View view,
                                     int position, long id) {
-//                view.animate().setDuration(2000).alpha(0)
-//                        .withEndAction(new Runnable() {
-//                            @Override
-//                            public void run() {
-//                                adapter.notifyDataSetChanged();
-//                                view.setAlpha(1);
-//                            }
-//                        });
             }
 
         });
 
         FloatingActionButton fab = root.findViewById(R.id.floatingActionButton);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                DialogFragment newFragment = new NewConnectionFragment();
-                newFragment.show(getParentFragmentManager(), "connections");
-            }
+        fab.setOnClickListener(view -> {
+            Navigation.findNavController(view).navigate(R.id.action_connections_to_scan);
+            //                DialogFragment newFragment = new NewConnectionFragment();
+//                newFragment.show(getParentFragmentManager(), "connections");
         });
 
         mViewModel = new ViewModelProvider(this).get(ConnectionsViewModel.class);
