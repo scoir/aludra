@@ -1,4 +1,4 @@
-package org.canis.aludra.ui.connections;
+package org.canis.aludra.ui.credentials;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -10,42 +10,47 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.DialogFragment;
 
 import org.canis.aludra.R;
+import org.canis.aludra.databinding.CredentialOfferFragmentBinding;
 
-public class AcceptConnectionFragment extends DialogFragment {
+public class CredentialOfferFragment extends DialogFragment {
 
-    public interface AcceptConnectionDialogListener {
-        void onAcceptConnectionClick(String connectionID);
-        void onCancelConnectionClick(DialogFragment dialog);
+    public interface OfferDialogListener {
+        void onAcceptCredentialClick(String piid, String label);
+        void onRejectCredentialClick(DialogFragment dialog);
     }
 
-    AcceptConnectionDialogListener listener;
-    String connectionID;
-    String label;
+    OfferDialogListener listener;
+    CredentialOfferFragmentBinding binding;
+    String piid;
+    String hint;
 
-    public AcceptConnectionFragment(String connectionID, String label) {
-        this.connectionID = connectionID;
-        this.label = label;
+    public CredentialOfferFragment(String piid, String hint) {
+        this.piid = piid;
+        this.hint = hint;
     }
 
     @NonNull
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         // Use the Builder class for convenient dialog construction
+        binding = CredentialOfferFragmentBinding.inflate(requireActivity().getLayoutInflater());
+        binding.setCredentialHint(hint);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         // Inflate and set the layout for the dialog
         // Pass null as the parent view because its going in the dialog layout
-        builder.setMessage("Accept connection from: " + label + "?")
-                .setIcon(R.drawable.ic_share_black_24dp)
-                .setTitle(R.string.title_connections)
+        builder.setView(binding.getRoot());
+        builder.setMessage(R.string.accept_credential).setTitle(R.string.title_credentials).setIcon(R.drawable.ic_school_black_24dp)
                 .setPositiveButton(R.string.create, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-                        listener.onAcceptConnectionClick(connectionID);
+                        binding.executePendingBindings();
+                        String name = binding.getCredentialName() == null ? hint : binding.getCredentialName();
+                        listener.onAcceptCredentialClick(piid, name);
                     }
                 })
                 .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-                        listener.onCancelConnectionClick(AcceptConnectionFragment.this);
+                        listener.onRejectCredentialClick(CredentialOfferFragment.this);
                     }
                 });
         // Create the AlertDialog object and return it
@@ -58,7 +63,7 @@ public class AcceptConnectionFragment extends DialogFragment {
 
         try {
             // Instantiate the NoticeDialogListener so we can send events to the host
-            listener = (AcceptConnectionDialogListener) context;
+            listener = (OfferDialogListener) context;
         } catch (ClassCastException e) {
             // The activity doesn't implement the interface, throw exception
             throw new ClassCastException(context.toString()

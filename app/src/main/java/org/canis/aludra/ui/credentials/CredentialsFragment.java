@@ -1,5 +1,8 @@
 package org.canis.aludra.ui.credentials;
 
+import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.lifecycle.ViewModelProviders;
 
 import android.content.Context;
@@ -24,10 +27,12 @@ import org.canis.aludra.ui.connections.ConnectionsFragment;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 
 public class CredentialsFragment extends Fragment {
 
     private CredentialsViewModel mViewModel;
+    private CredentialsFragment.CredentialArrayAdapter adapter;
 
     public static CredentialsFragment newInstance() {
         return new CredentialsFragment();
@@ -42,7 +47,7 @@ public class CredentialsFragment extends Fragment {
         MainActivity mainActivity = (MainActivity) getActivity();
 
         final List<Credential> list = mainActivity.getCredentials();
-        final CredentialsFragment.CredentialArrayAdapter adapter = new CredentialsFragment.CredentialArrayAdapter(mainActivity,
+        adapter = new CredentialsFragment.CredentialArrayAdapter(mainActivity,
                 android.R.layout.simple_list_item_1, list);
         listview.setAdapter(adapter);
 
@@ -71,8 +76,17 @@ public class CredentialsFragment extends Fragment {
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        mViewModel = ViewModelProviders.of(this).get(CredentialsViewModel.class);
-        // TODO: Use the ViewModel
+        mViewModel = new ViewModelProvider(this).get(CredentialsViewModel.class);
+
+        final Observer<List<Credential>> credentialObserver = new Observer<List<Credential>>() {
+            @Override
+            public void onChanged(List<Credential> credentials) {
+                MutableLiveData<List<Credential>> creds = mViewModel.getCredentials();
+                adapter.clear();
+                adapter.addAll(Objects.requireNonNull(creds.getValue()));
+            }
+        };
+        mViewModel.getCredentials().observe(getViewLifecycleOwner(), credentialObserver);
     }
 
     private static class CredentialArrayAdapter extends ArrayAdapter<Credential> {

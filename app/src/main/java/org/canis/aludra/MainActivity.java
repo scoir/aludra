@@ -20,6 +20,7 @@ import org.canis.aludra.model.QueryCredentialResults;
 import org.canis.aludra.ui.connections.AcceptConnectionFragment;
 import org.canis.aludra.ui.connections.DIDExchangeHandler;
 import org.canis.aludra.ui.connections.NewConnectionFragment;
+import org.canis.aludra.ui.credentials.CredentialOfferFragment;
 import org.canis.aludra.ui.credentials.IssueCredentialHandler;
 import org.hyperledger.aries.api.AriesController;
 import org.hyperledger.aries.api.DIDExchangeController;
@@ -37,8 +38,8 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements
         NewConnectionFragment.NewConnectionDialogListener,
-        DIDExchangeHandler.DIDExchangeCallback,
-        AcceptConnectionFragment.AcceptConnectionDialogListener{
+        DIDExchangeHandler.DIDExchangeCallback, AcceptConnectionFragment.AcceptConnectionDialogListener,
+        IssueCredentialHandler.IssueCredentialCallback, CredentialOfferFragment.OfferDialogListener {
 
     AriesController agent;
     DIDExchangeHandler didExchangeHandler;
@@ -69,7 +70,7 @@ public class MainActivity extends AppCompatActivity implements
         try {
             agent = Ariesagent.new_(opts);
             didExchangeHandler = new DIDExchangeHandler(agent.getDIDExchangeController(), this);
-            issueCredHandler = new IssueCredentialHandler(agent.getIssueCredentialController());
+            issueCredHandler = new IssueCredentialHandler(agent.getIssueCredentialController(), this);
 
             // create an aries agent instance
             String registrationID = agent.registerHandler(didExchangeHandler, "didexchange_states");
@@ -177,17 +178,39 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public void onInvited(String connectionID, String label) {
-        DialogFragment newFragment = new AcceptConnectionFragment(connectionID, label);
-        newFragment.show(getSupportFragmentManager(), "connections");
+        DialogFragment connFrag = new AcceptConnectionFragment(connectionID, label);
+        connFrag.show(getSupportFragmentManager(), "connections");
     }
 
     @Override
-    public void onAcceptClick(String connectionID) {
+    public void onAcceptConnectionClick(String connectionID) {
         didExchangeHandler.Continue(connectionID, "");
     }
 
     @Override
-    public void onCancelClick(DialogFragment dialog) {
+    public void onCancelConnectionClick(DialogFragment dialog) {
+
+    }
+
+    @Override
+    public void onOffer(String piid, String label) {
+        DialogFragment offerFrag = new CredentialOfferFragment(piid, label);
+        offerFrag.show(getSupportFragmentManager(), "offers");
+    }
+
+    @Override
+    public void accepted(String piid) {
+//        TODO: make the Credential Dialog the handler for this stuff!!
+//        model.getCurrentName().setValue(anotherName);
+    }
+
+    @Override
+    public void onAcceptCredentialClick(String piid, String label) {
+        issueCredHandler.acceptOffer(piid, label);
+    }
+
+    @Override
+    public void onRejectCredentialClick(DialogFragment dialog) {
 
     }
 }

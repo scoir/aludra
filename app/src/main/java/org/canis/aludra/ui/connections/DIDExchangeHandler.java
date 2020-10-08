@@ -5,7 +5,6 @@ import android.os.Build;
 import android.util.Log;
 
 import androidx.annotation.RequiresApi;
-import androidx.fragment.app.DialogFragment;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -38,9 +37,6 @@ public class DIDExchangeHandler implements Handler {
         this.cb = cb;
     }
 
-    public String getLastNotification() {
-        return lastTopic+"\n"+lastMessage;
-    }
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     @SuppressLint("LongLogTag")
     @Override

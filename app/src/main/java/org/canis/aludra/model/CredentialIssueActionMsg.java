@@ -7,7 +7,9 @@ public class CredentialIssueActionMsg extends ActionMsg<Issue, CredentialIssueAc
     public String getMyDID() {
         return properties.myDID;
     }
-
+    public String getComment() {
+        return message.comment;
+    }
     public String getTheirDID() {
         return properties.theirDID;
     }

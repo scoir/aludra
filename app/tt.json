@@ -1,8 +1,8 @@
 {
   "result": [
     {
-      "name": "urn:uuid:cc141a29-b002-4ccb-86e6-03f5ff73efd2",
-      "id": "urn:uuid:cc141a29-b002-4ccb-86e6-03f5ff73efd2",
+      "name": "urn:uuid:c3950b6f-2a8d-494d-a6cf-3316b698b26a",
+      "id": "urn:uuid:c3950b6f-2a8d-494d-a6cf-3316b698b26a",
       "context": [
         "https://www.w3.org/2018/credentials/v1",
         "https://schema.org/docs/jsonldcontext.json"
@@ -11,8 +11,8 @@
         "VerifiableCredential",
         "Course"
       ],
-      "my_did": "did:peer:1zQmUpE7ZhYMjbLrpBBEwKDn2WiP6uYCWkA81pmexxQ57ioB",
-      "their_did": "did:peer:1zQmd3b6bgeZUAXdpToPRgSnRVfcUWr3GEcB1L4i7Jszrfhn"
+      "my_did": "did:peer:1zQmQ8thMHvSBjeFbqLtHKTWY1thZf5X8sfSbuWpXJY5hUMt",
+      "their_did": "did:peer:1zQmbchPaniGtte7QPQwL6JBXcbUoquQM7enVHfcoXeJrBAR"
     }
   ]
 }

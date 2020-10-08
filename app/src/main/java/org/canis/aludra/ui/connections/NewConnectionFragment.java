@@ -22,20 +22,22 @@ public class NewConnectionFragment extends DialogFragment {
     NewConnectionDialogListener listener;
     NewConnectionFragmentBinding binding;
 
+    final String demoInvitation = "{\n" +
+            "  \"serviceEndpoint\": \"ws://172.17.0.1:9001\",\n" +
+            "  \"recipientKeys\": [\n" +
+            "   \"7tzKzkUBz1PudXavJvBkrgC5TZ5veDCpZtVraUGQPZSH\"\n" +
+            "  ],\n" +
+            "  \"@id\": \"7f82f100-bff6-45ae-af94-c77118483c14\",\n" +
+            "  \"label\": \"Hogwarts School of Witchcraft and Wizardry\",\n" +
+            "  \"@type\": \"https://didcomm.org/didexchange/1.0/invitation\"\n" +
+            " }\n";
+
     @NonNull
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         // Use the Builder class for convenient dialog construction
         binding = NewConnectionFragmentBinding.inflate(requireActivity().getLayoutInflater());
-        binding.setInvitation("{\n" +
-                "  \"serviceEndpoint\": \"ws://172.17.0.1:9001\",\n" +
-                "  \"recipientKeys\": [\n" +
-                "   \"B4urTEJg9Vts6ZEApA2ZB43Yji9Siyfvvit2HNX4yXiC\"\n" +
-                "  ],\n" +
-                "  \"@id\": \"3762abcc-6b7d-462b-9fc0-f7d74161858d\",\n" +
-                "  \"label\": \"Hogwarts School of Witchcraft and Wizardry\",\n" +
-                "  \"@type\": \"https://didcomm.org/didexchange/1.0/invitation\"\n" +
-                " }\n");
+        binding.setInvitation(demoInvitation);
 
 
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
