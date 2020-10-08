@@ -14,17 +14,12 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import org.canis.aludra.model.Connection;
-import org.canis.aludra.model.Credential;
 import org.canis.aludra.model.QueryConnectionResults;
-import org.canis.aludra.model.QueryCredentialResults;
 import org.canis.aludra.ui.connections.AcceptConnectionFragment;
 import org.canis.aludra.ui.connections.DIDExchangeHandler;
 import org.canis.aludra.ui.connections.NewConnectionFragment;
-import org.canis.aludra.ui.credentials.CredentialOfferFragment;
-import org.canis.aludra.ui.credentials.IssueCredentialHandler;
 import org.hyperledger.aries.api.AriesController;
 import org.hyperledger.aries.api.DIDExchangeController;
-import org.hyperledger.aries.api.VerifiableController;
 import org.hyperledger.aries.ariesagent.Ariesagent;
 import org.hyperledger.aries.config.Options;
 import org.hyperledger.aries.models.CommandError;
@@ -38,14 +33,11 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements
         NewConnectionFragment.NewConnectionDialogListener,
-        DIDExchangeHandler.DIDExchangeCallback, AcceptConnectionFragment.AcceptConnectionDialogListener,
-        IssueCredentialHandler.IssueCredentialCallback, CredentialOfferFragment.OfferDialogListener {
+        DIDExchangeHandler.DIDExchangeCallback, AcceptConnectionFragment.AcceptConnectionDialogListener
+         {
 
     AriesController agent;
     DIDExchangeHandler didExchangeHandler;
-    IssueCredentialHandler issueCredHandler;
-
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,23 +62,24 @@ public class MainActivity extends AppCompatActivity implements
         try {
             agent = Ariesagent.new_(opts);
             didExchangeHandler = new DIDExchangeHandler(agent.getDIDExchangeController(), this);
-            issueCredHandler = new IssueCredentialHandler(agent.getIssueCredentialController(), this);
 
             // create an aries agent instance
             String registrationID = agent.registerHandler(didExchangeHandler, "didexchange_states");
             System.out.println("didexchange handler registered as: " + registrationID);
-            registrationID = agent.registerHandler(issueCredHandler, "issue-credential_actions");
-            System.out.println("isseu credential handler registered as: " + registrationID);
         } catch (Exception e) {
             e.printStackTrace();
         }
 
     }
 
+    public AriesController getAgent() {
+        return agent;
+    }
+
     @Override
     public void onInvite(String invitation) {
         // create options
-        ResponseEnvelope res = new ResponseEnvelope();
+        ResponseEnvelope res;
         try {
             // create a controller
             DIDExchangeController i = agent.getDIDExchangeController();
@@ -114,7 +107,7 @@ public class MainActivity extends AppCompatActivity implements
 
     public List<Connection> getConnections() {
 
-        ArrayList<Connection> out = new ArrayList<Connection>();
+        ArrayList<Connection> out = new ArrayList<>();
         try {
             DIDExchangeController i = agent.getDIDExchangeController();
 
@@ -144,37 +137,6 @@ public class MainActivity extends AppCompatActivity implements
         return out;
     }
 
-    public List<Credential> getCredentials() {
-
-        ArrayList<Credential> out = new ArrayList<Credential>();
-        try {
-            VerifiableController i = agent.getVerifiableController();
-
-            byte[] data = "{}".getBytes(StandardCharsets.UTF_8);
-            ResponseEnvelope resp = i.getCredentials(new RequestEnvelope(data));
-
-            if (resp.getError() != null) {
-                CommandError err = resp.getError();
-                System.out.println(err.toString());
-            } else {
-                GsonBuilder gsonb = new GsonBuilder();
-                Gson gson = gsonb.create();
-
-                String actionsResponse = new String(resp.getPayload(), StandardCharsets.UTF_8);
-                System.out.println(actionsResponse);
-                QueryCredentialResults results = gson.fromJson(actionsResponse, QueryCredentialResults.class);
-                if (results.results != null) {
-                    out.addAll(results.results);
-                }
-                return out;
-            }
-
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return out;
-    }
 
     @Override
     public void onInvited(String connectionID, String label) {
@@ -192,25 +154,4 @@ public class MainActivity extends AppCompatActivity implements
 
     }
 
-    @Override
-    public void onOffer(String piid, String label) {
-        DialogFragment offerFrag = new CredentialOfferFragment(piid, label);
-        offerFrag.show(getSupportFragmentManager(), "offers");
-    }
-
-    @Override
-    public void accepted(String piid) {
-//        TODO: make the Credential Dialog the handler for this stuff!!
-//        model.getCurrentName().setValue(anotherName);
-    }
-
-    @Override
-    public void onAcceptCredentialClick(String piid, String label) {
-        issueCredHandler.acceptOffer(piid, label);
-    }
-
-    @Override
-    public void onRejectCredentialClick(DialogFragment dialog) {
-
-    }
 }
