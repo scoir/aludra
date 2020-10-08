@@ -7,7 +7,9 @@ import android.content.DialogInterface;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.Fragment;
 
 import org.canis.aludra.R;
 
@@ -53,15 +55,15 @@ public class AcceptConnectionFragment extends DialogFragment {
     }
 
     @Override
-    public void onAttach(@NonNull Context context) {
-        super.onAttach(context);
+    public void setTargetFragment(@Nullable Fragment fragment, int requestCode) {
+        super.setTargetFragment(fragment, requestCode);
 
         try {
             // Instantiate the NoticeDialogListener so we can send events to the host
-            listener = (AcceptConnectionDialogListener) context;
+            listener = (AcceptConnectionDialogListener) fragment;
         } catch (ClassCastException e) {
             // The activity doesn't implement the interface, throw exception
-            throw new ClassCastException(context.toString()
+            throw new ClassCastException(fragment.toString()
                     + " must implement NoticeDialogListener");
         }
     }

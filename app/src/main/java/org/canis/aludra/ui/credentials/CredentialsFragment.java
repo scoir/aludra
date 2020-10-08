@@ -63,15 +63,14 @@ public class CredentialsFragment extends Fragment implements IssueCredentialHand
             @Override
             public void onItemClick(AdapterView<?> parent, final View view,
                                     int position, long id) {
-                final Credential item = (Credential) parent.getItemAtPosition(position);
-                view.animate().setDuration(2000).alpha(0)
-                        .withEndAction(new Runnable() {
-                            @Override
-                            public void run() {
-                                adapter.notifyDataSetChanged();
-                                view.setAlpha(1);
-                            }
-                        });
+//                view.animate().setDuration(2000).alpha(0)
+//                        .withEndAction(new Runnable() {
+//                            @Override
+//                            public void run() {
+//                                adapter.notifyDataSetChanged();
+//                                view.setAlpha(1);
+//                            }
+//                        });
             }
 
         });
