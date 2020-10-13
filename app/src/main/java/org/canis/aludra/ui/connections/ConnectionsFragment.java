@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -25,6 +26,7 @@ import com.google.gson.GsonBuilder;
 import org.canis.aludra.MainActivity;
 import org.canis.aludra.R;
 import org.canis.aludra.model.Connection;
+import org.canis.aludra.model.ConnectionResult;
 import org.canis.aludra.model.QueryConnectionResults;
 import org.hyperledger.aries.api.AriesController;
 import org.hyperledger.aries.api.DIDExchangeController;
@@ -72,9 +74,6 @@ public class ConnectionsFragment extends Fragment implements DIDExchangeHandler.
         FloatingActionButton fab = root.findViewById(R.id.floatingActionButton);
         fab.setOnClickListener(view -> {
             Navigation.findNavController(view).navigate(R.id.action_connections_to_scan);
-//            ScanInvitationFragment scanFrag  = (ScanInvitationFragment) mainActivity.getSupportFragmentManager().findFragmentById(R.id.scanConnectionFragment);
-//            scanFrag.setScanInvitationListener(this);
-
         });
 
         mViewModel = new ViewModelProvider(this).get(ConnectionsViewModel.class);
@@ -117,9 +116,17 @@ public class ConnectionsFragment extends Fragment implements DIDExchangeHandler.
             res = didExchangeController.receiveInvitation(new RequestEnvelope(decoded));
             if (res.getError() != null) {
                 CommandError err = res.getError();
-                System.out.println(err.toString());
+                Toast.makeText(getActivity(), "Unexpected Error.", Toast.LENGTH_SHORT).show();
             } else {
                 String actionsResponse = new String(res.getPayload(), StandardCharsets.UTF_8);
+                GsonBuilder gsonb = new GsonBuilder();
+                Gson gson = gsonb.create();
+                ConnectionResult results = gson.fromJson(actionsResponse, ConnectionResult.class);
+                if (results.code == 2003) {
+                    Toast.makeText(getActivity(), "Already Connected.", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(getActivity(), results.message, Toast.LENGTH_SHORT).show();
+                }
                 System.out.println(actionsResponse);
             }
         } catch (Exception e) {

@@ -43,7 +43,7 @@ public class CredentialOfferFragment extends DialogFragment {
         // Pass null as the parent view because its going in the dialog layout
         builder.setView(binding.getRoot());
         builder.setMessage(R.string.accept_credential).setTitle(R.string.title_credentials).setIcon(R.drawable.ic_school_black_24dp)
-                .setPositiveButton(R.string.create, new DialogInterface.OnClickListener() {
+                .setPositiveButton(R.string.accept, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         binding.executePendingBindings();
                         String name = binding.getCredentialName() == null ? hint : binding.getCredentialName();

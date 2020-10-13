@@ -25,6 +25,8 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.Navigation;
+import androidx.navigation.Navigator;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
@@ -66,7 +68,7 @@ public class ScanInvitationFragment extends Fragment {
         qrCodeFoundButton.setOnClickListener(v -> {
             if (listener != null) {
                 listener.onScanSuccess(qrCode);
-                getActivity().getFragmentManager().popBackStack();
+                Navigation.findNavController(root).popBackStack();
             } else {
                 Toast.makeText(getActivity(), qrCode, Toast.LENGTH_SHORT).show();
                 Log.i(MainActivity.class.getSimpleName(), "QR Code Found: " + qrCode);
@@ -78,6 +80,8 @@ public class ScanInvitationFragment extends Fragment {
 
         return root;
     }
+
+
 
     @Override
     public void onAttach(@NonNull Context context) {
@@ -119,6 +123,7 @@ public class ScanInvitationFragment extends Fragment {
             }
         }
     }
+
 
 
     private void startCamera() {
@@ -165,4 +170,5 @@ public class ScanInvitationFragment extends Fragment {
 
         Camera camera = cameraProvider.bindToLifecycle((LifecycleOwner)this, cameraSelector, imageAnalysis, preview);
     }
+
 }

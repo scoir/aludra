@@ -100,6 +100,5 @@ public class IssueCredentialHandler implements Handler {
         }
 
         cb.accepted(piid);
-
     }
 }
