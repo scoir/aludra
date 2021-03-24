@@ -27,6 +27,9 @@ import org.canis.aludra.R;
 import org.canis.aludra.model.Connection;
 import org.canis.aludra.model.ConnectionRequest;
 import org.canis.aludra.model.ConnectionResult;
+import org.canis.aludra.model.Invitation;
+import org.canis.aludra.model.InvitationResult;
+import org.canis.aludra.service.AcceptInvitationTask;
 import org.canis.aludra.service.ListConnectionsTask;
 
 import java.nio.charset.StandardCharsets;
@@ -35,7 +38,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
-public class ConnectionsFragment extends Fragment implements AcceptConnectionFragment.AcceptConnectionDialogListener, ScanInvitationFragment.ScanInvitationListener, ListConnectionsTask.ListConnectionsTaskHandler {
+public class ConnectionsFragment extends Fragment implements AcceptConnectionFragment.AcceptConnectionDialogListener,
+        ScanInvitationFragment.ScanInvitationListener, ListConnectionsTask.ListConnectionsTaskHandler,
+        AcceptInvitationTask.AcceptInvitationTaskHandler {
 
     ConnectionsViewModel mViewModel;
 
@@ -60,7 +65,9 @@ public class ConnectionsFragment extends Fragment implements AcceptConnectionFra
 
         FloatingActionButton fab = root.findViewById(R.id.floatingActionButton);
         fab.setOnClickListener(view -> {
-            Navigation.findNavController(view).navigate(R.id.action_connections_to_scan);
+            //Calling with the result of the scanned barcode.  Short circuited here because my barcode scanner isn't working
+            //Navigation.findNavController(view).navigate(R.id.action_connections_to_scan);
+            this.onScanSuccess("eyJAaWQiOiI2OTJkM2EyYS1jZThmLTQ4OTItYTBlYi0wMDVmNjliNDFhZWMiLCJsYWJlbCI6IlNwcmluZ2ZpZWxkIEhpZ2ggU2Nob29sIiwiZGlkIjoiZGlkOnNvdjo0c3BrUFl1UThoRHR3ejd4NFhXTWFhIiwiQHR5cGUiOiJodHRwczovL2RpZGNvbW0ub3JnL2RpZGV4Y2hhbmdlLzEuMC9pbnZpdGF0aW9uIn0=");
         });
 
         mViewModel = new ViewModelProvider(this).get(ConnectionsViewModel.class);
@@ -87,31 +94,29 @@ public class ConnectionsFragment extends Fragment implements AcceptConnectionFra
 
     @Override
     public void onScanSuccess(String invitation) {
-//        ResponseEnvelope res;
-//        try {
-//            byte[] data = invitation.getBytes(StandardCharsets.UTF_8);
-//            byte[] decoded = Base64.getDecoder().decode(data);
-//
-//
-//            res = didExchangeController.receiveInvitation(new RequestEnvelope(decoded));
-//            if (res.getError() != null) {
-//                CommandError err = res.getError();
-//                Toast.makeText(getActivity(), "Unexpected Error.", Toast.LENGTH_SHORT).show();
-//            } else {
-//                String actionsResponse = new String(res.getPayload(), StandardCharsets.UTF_8);
-//                GsonBuilder gsonb = new GsonBuilder();
-//                Gson gson = gsonb.create();
-//                ConnectionResult results = gson.fromJson(actionsResponse, ConnectionResult.class);
-//                if (results.code == 2003) {
-//                    Toast.makeText(getActivity(), "Already Connected.", Toast.LENGTH_SHORT).show();
-//                } else {
-//                    Toast.makeText(getActivity(), results.message, Toast.LENGTH_SHORT).show();
-//                }
-//                System.out.println(actionsResponse);
-//            }
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
+        try {
+            MainActivity mainActivity = (MainActivity) getActivity();
+            assert mainActivity != null;
+
+            Invitation req = new Invitation();
+            req.invitation = invitation;
+            GsonBuilder gsonb = new GsonBuilder();
+            Gson gson = gsonb.disableHtmlEscaping().create();
+            String json = gson.toJson(req);
+
+            byte[] signature = mainActivity.Sign(json.getBytes(StandardCharsets.UTF_8));
+
+            AcceptInvitationTask task = new AcceptInvitationTask(
+                    this,
+                    mainActivity.getCloudAgentId(),
+                    Base64.encodeToString(signature, Base64.URL_SAFE | Base64.NO_WRAP)
+            );
+
+            task.execute(req);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
     }
 
@@ -122,7 +127,7 @@ public class ConnectionsFragment extends Fragment implements AcceptConnectionFra
 
         ConnectionRequest req = new ConnectionRequest();
         GsonBuilder gsonb = new GsonBuilder();
-        Gson gson = gsonb.create();
+        Gson gson = gsonb.disableHtmlEscaping().create();
         String json = gson.toJson(req);
 
         List<Connection> out = new ArrayList<>();
@@ -163,6 +168,14 @@ public class ConnectionsFragment extends Fragment implements AcceptConnectionFra
         if (connections.count > 0) {
             mViewModel.getConnections().setValue(connections.connections);
         }
+    }
+
+    @Override
+    public void HandleConnections(InvitationResult result) {
+        System.out.println("*********************************************");
+        System.out.println("Accepted invitation");
+        System.out.println("*********************************************");
+        this.getConnections();
     }
 
     private static class ConnectionArrayAdapter extends ArrayAdapter<Connection> {

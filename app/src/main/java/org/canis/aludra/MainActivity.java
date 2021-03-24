@@ -9,10 +9,6 @@ import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.crypto.tink.CleartextKeysetHandle;
-import com.google.crypto.tink.JsonKeysetReader;
-import com.google.crypto.tink.KeysetHandle;
-import com.google.crypto.tink.PublicKeySign;
 import com.google.crypto.tink.signature.SignatureConfig;
 import com.google.crypto.tink.subtle.Base64;
 import com.google.crypto.tink.subtle.Ed25519Sign;
@@ -25,8 +21,6 @@ import org.canis.aludra.model.Registration;
 import org.canis.aludra.service.RegisterTask;
 import org.canis.aludra.ui.connections.ScanInvitationFragment;
 
-import java.io.File;
-import java.io.IOException;
 import java.security.GeneralSecurityException;
 
 

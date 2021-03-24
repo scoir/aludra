@@ -2,31 +2,28 @@ package org.canis.aludra.service;
 
 import android.os.AsyncTask;
 
-import org.canis.aludra.model.CloudAgent;
-import org.canis.aludra.model.Connection;
-import org.canis.aludra.model.ConnectionRequest;
-import org.canis.aludra.model.ConnectionResult;
+import org.canis.aludra.model.Invitation;
+import org.canis.aludra.model.InvitationResult;
 
 import java.io.IOException;
-import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-public class ListConnectionsTask extends AsyncTask<ConnectionRequest, Void, ConnectionResult> {
+public class AcceptInvitationTask extends AsyncTask<Invitation, Void, InvitationResult> {
 
-    public interface ListConnectionsTaskHandler {
-        void HandleConnections(ConnectionResult result);
+    public interface AcceptInvitationTaskHandler {
+        void HandleConnections(InvitationResult result);
     }
 
-    private final ListConnectionsTaskHandler handler;
+    private final AcceptInvitationTaskHandler handler;
 
     private String cloudAgentId;
     private String signature;
 
-    public ListConnectionsTask(ListConnectionsTaskHandler handler, String cloudAgentId, String signature) {
+    public AcceptInvitationTask(AcceptInvitationTaskHandler handler, String cloudAgentId, String signature) {
         this.handler = handler;
         this.cloudAgentId = cloudAgentId;
         this.signature = signature;
@@ -34,7 +31,7 @@ public class ListConnectionsTask extends AsyncTask<ConnectionRequest, Void, Conn
 
 
     @Override
-    protected ConnectionResult doInBackground(ConnectionRequest... reqs) {
+    protected InvitationResult doInBackground(Invitation... invites) {
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl("https://canis.scoir.ninja")
                 .addConverterFactory(GsonConverterFactory.create())
@@ -42,9 +39,9 @@ public class ListConnectionsTask extends AsyncTask<ConnectionRequest, Void, Conn
 
         CanisService service = retrofit.create(CanisService.class);
 
-        Call<ConnectionResult> call = service.ListConnections(this.cloudAgentId, this.signature, reqs[0]);
+        Call<InvitationResult> call = service.AcceptInvitation(this.cloudAgentId, this.signature, invites[0]);
         try {
-            Response<ConnectionResult> resp = call.execute();
+            Response<InvitationResult> resp = call.execute();
             if (resp.isSuccessful()) {
                 return resp.body();
             } else {
@@ -58,8 +55,9 @@ public class ListConnectionsTask extends AsyncTask<ConnectionRequest, Void, Conn
     }
 
     @Override
-    protected void onPostExecute(ConnectionResult result) {
+    protected void onPostExecute(InvitationResult result) {
         super.onPostExecute(result);
+
         this.handler.HandleConnections(result);
     }
 }

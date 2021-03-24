@@ -54,11 +54,6 @@ public class RegisterTask extends AsyncTask<Registration, Void, CloudAgent> {
     @Override
     protected void onPostExecute(CloudAgent cloudAgent) {
         super.onPostExecute(cloudAgent);
-
-        System.out.println("*****************************************************************");
-        System.out.println(cloudAgent.cloudAgentId);
-        System.out.println("*****************************************************************");
-
         handler.HandleCloudAgent(cloudAgent);
     }
 }
