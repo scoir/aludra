@@ -17,31 +17,19 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-
 import org.canis.aludra.MainActivity;
 import org.canis.aludra.R;
 import org.canis.aludra.model.Credential;
-import org.canis.aludra.model.QueryCredentialResults;
-import org.hyperledger.aries.api.AriesController;
-import org.hyperledger.aries.api.VerifiableController;
-import org.hyperledger.aries.models.CommandError;
-import org.hyperledger.aries.models.RequestEnvelope;
-import org.hyperledger.aries.models.ResponseEnvelope;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
-public class CredentialsFragment extends Fragment implements IssueCredentialHandler.IssueCredentialCallback, CredentialOfferFragment.OfferDialogListener {
+public class CredentialsFragment extends Fragment implements CredentialOfferFragment.OfferDialogListener {
 
     private CredentialsViewModel mViewModel;
     private CredentialsFragment.CredentialArrayAdapter adapter;
-    IssueCredentialHandler issueCredHandler;
-    VerifiableController verifiableController;
 
 
     @Override
@@ -89,14 +77,6 @@ public class CredentialsFragment extends Fragment implements IssueCredentialHand
 
 
         try {
-            AriesController agent = mainActivity.getAgent();
-
-            verifiableController = agent.getVerifiableController();
-            mViewModel.getCredentials().setValue(getCredentials());
-
-            issueCredHandler = new IssueCredentialHandler(agent.getIssueCredentialController(), this);
-            String registrationID = agent.registerHandler(issueCredHandler, "issue-credential_actions");
-            System.out.println("isseu credential handler registered as: " + registrationID);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -104,21 +84,18 @@ public class CredentialsFragment extends Fragment implements IssueCredentialHand
         return root;
     }
 
-    @Override
     public void onOffer(String piid, String label) {
         DialogFragment offerFrag = new CredentialOfferFragment(piid, label);
         offerFrag.setTargetFragment(this, 0);
         offerFrag.show(getParentFragmentManager(), "offers");
     }
 
-    @Override
     public void accepted(String piid) {
         mViewModel.getCredentials().setValue(getCredentials());
     }
 
     @Override
     public void onAcceptCredentialClick(String piid, String label) {
-        issueCredHandler.acceptOffer(piid, label);
     }
 
     @Override
@@ -162,31 +139,31 @@ public class CredentialsFragment extends Fragment implements IssueCredentialHand
     public List<Credential> getCredentials() {
 
         ArrayList<Credential> out = new ArrayList<>();
-        try {
-
-            byte[] data = "{}".getBytes(StandardCharsets.UTF_8);
-            ResponseEnvelope resp = verifiableController.getCredentials(new RequestEnvelope(data));
-
-            if (resp.getError() != null) {
-                CommandError err = resp.getError();
-                System.out.println(err.toString());
-            } else {
-                GsonBuilder gsonb = new GsonBuilder();
-                Gson gson = gsonb.create();
-
-                String actionsResponse = new String(resp.getPayload(), StandardCharsets.UTF_8);
-                System.out.println(actionsResponse);
-                QueryCredentialResults results = gson.fromJson(actionsResponse, QueryCredentialResults.class);
-                if (results.results != null) {
-                    out.addAll(results.results);
-                }
-                return out;
-            }
-
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+//        try {
+//
+//            byte[] data = "{}".getBytes(StandardCharsets.UTF_8);
+//            ResponseEnvelope resp = verifiableController.getCredentials(new RequestEnvelope(data));
+//
+//            if (resp.getError() != null) {
+//                CommandError err = resp.getError();
+//                System.out.println(err.toString());
+//            } else {
+//                GsonBuilder gsonb = new GsonBuilder();
+//                Gson gson = gsonb.create();
+//
+//                String actionsResponse = new String(resp.getPayload(), StandardCharsets.UTF_8);
+//                System.out.println(actionsResponse);
+//                QueryCredentialResults results = gson.fromJson(actionsResponse, QueryCredentialResults.class);
+//                if (results.results != null) {
+//                    out.addAll(results.results);
+//                }
+//                return out;
+//            }
+//
+//
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
         return out;
     }
 

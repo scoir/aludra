@@ -5,10 +5,8 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -20,32 +18,26 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.crypto.tink.subtle.Base64;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import org.canis.aludra.MainActivity;
 import org.canis.aludra.R;
 import org.canis.aludra.model.Connection;
+import org.canis.aludra.model.ConnectionRequest;
 import org.canis.aludra.model.ConnectionResult;
-import org.canis.aludra.model.QueryConnectionResults;
-import org.hyperledger.aries.api.AriesController;
-import org.hyperledger.aries.api.DIDExchangeController;
-import org.hyperledger.aries.models.CommandError;
-import org.hyperledger.aries.models.RequestEnvelope;
-import org.hyperledger.aries.models.ResponseEnvelope;
+import org.canis.aludra.service.ListConnectionsTask;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
-public class ConnectionsFragment extends Fragment implements DIDExchangeHandler.DIDExchangeCallback, AcceptConnectionFragment.AcceptConnectionDialogListener, ScanInvitationFragment.ScanInvitationListener {
+public class ConnectionsFragment extends Fragment implements AcceptConnectionFragment.AcceptConnectionDialogListener, ScanInvitationFragment.ScanInvitationListener, ListConnectionsTask.ListConnectionsTaskHandler {
 
     ConnectionsViewModel mViewModel;
-    DIDExchangeController didExchangeController;
-    DIDExchangeHandler didExchangeHandler;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -63,12 +55,7 @@ public class ConnectionsFragment extends Fragment implements DIDExchangeHandler.
                 android.R.layout.simple_list_item_1, list);
         listview.setAdapter(adapter);
 
-        listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, final View view,
-                                    int position, long id) {
-            }
-
+        listview.setOnItemClickListener((parent, view, position, id) -> {
         });
 
         FloatingActionButton fab = root.findViewById(R.id.floatingActionButton);
@@ -89,14 +76,7 @@ public class ConnectionsFragment extends Fragment implements DIDExchangeHandler.
         mViewModel.getConnections().observe(getViewLifecycleOwner(), connectionObserver);
 
         try {
-            AriesController agent = mainActivity.getAgent();
-
-            didExchangeController = agent.getDIDExchangeController();
-            mViewModel.getConnections().setValue(getConnections());
-
-            didExchangeHandler = new DIDExchangeHandler(agent.getDIDExchangeController(), this);
-            String registrationID = agent.registerHandler(didExchangeHandler, "didexchange_states");
-            System.out.println("didexchange handler registered as: " + registrationID);
+            getConnections();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -107,58 +87,55 @@ public class ConnectionsFragment extends Fragment implements DIDExchangeHandler.
 
     @Override
     public void onScanSuccess(String invitation) {
-        ResponseEnvelope res;
-        try {
-            byte[] data = invitation.getBytes(StandardCharsets.UTF_8);
-            byte[] decoded = Base64.getDecoder().decode(data);
-
-
-            res = didExchangeController.receiveInvitation(new RequestEnvelope(decoded));
-            if (res.getError() != null) {
-                CommandError err = res.getError();
-                Toast.makeText(getActivity(), "Unexpected Error.", Toast.LENGTH_SHORT).show();
-            } else {
-                String actionsResponse = new String(res.getPayload(), StandardCharsets.UTF_8);
-                GsonBuilder gsonb = new GsonBuilder();
-                Gson gson = gsonb.create();
-                ConnectionResult results = gson.fromJson(actionsResponse, ConnectionResult.class);
-                if (results.code == 2003) {
-                    Toast.makeText(getActivity(), "Already Connected.", Toast.LENGTH_SHORT).show();
-                } else {
-                    Toast.makeText(getActivity(), results.message, Toast.LENGTH_SHORT).show();
-                }
-                System.out.println(actionsResponse);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+//        ResponseEnvelope res;
+//        try {
+//            byte[] data = invitation.getBytes(StandardCharsets.UTF_8);
+//            byte[] decoded = Base64.getDecoder().decode(data);
+//
+//
+//            res = didExchangeController.receiveInvitation(new RequestEnvelope(decoded));
+//            if (res.getError() != null) {
+//                CommandError err = res.getError();
+//                Toast.makeText(getActivity(), "Unexpected Error.", Toast.LENGTH_SHORT).show();
+//            } else {
+//                String actionsResponse = new String(res.getPayload(), StandardCharsets.UTF_8);
+//                GsonBuilder gsonb = new GsonBuilder();
+//                Gson gson = gsonb.create();
+//                ConnectionResult results = gson.fromJson(actionsResponse, ConnectionResult.class);
+//                if (results.code == 2003) {
+//                    Toast.makeText(getActivity(), "Already Connected.", Toast.LENGTH_SHORT).show();
+//                } else {
+//                    Toast.makeText(getActivity(), results.message, Toast.LENGTH_SHORT).show();
+//                }
+//                System.out.println(actionsResponse);
+//            }
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
 
     }
 
     public List<Connection> getConnections() {
 
-        ArrayList<Connection> out = new ArrayList<>();
+        MainActivity mainActivity = (MainActivity) getActivity();
+        assert mainActivity != null;
+
+        ConnectionRequest req = new ConnectionRequest();
+        GsonBuilder gsonb = new GsonBuilder();
+        Gson gson = gsonb.create();
+        String json = gson.toJson(req);
+
+        List<Connection> out = new ArrayList<>();
         try {
-            byte[] data = "{}".getBytes(StandardCharsets.UTF_8);
-            ResponseEnvelope resp = didExchangeController.queryConnections(new RequestEnvelope(data));
+            byte[] signature = mainActivity.Sign(json.getBytes(StandardCharsets.UTF_8));
 
-            if (resp.getError() != null) {
-                CommandError err = resp.getError();
-                System.out.println(err.toString());
-            } else {
-                GsonBuilder gsonb = new GsonBuilder();
-                Gson gson = gsonb.create();
+            ListConnectionsTask task = new ListConnectionsTask(
+                    this,
+                    mainActivity.getCloudAgentId(),
+                    Base64.encodeToString(signature, Base64.URL_SAFE | Base64.NO_WRAP)
+            );
 
-                String actionsResponse = new String(resp.getPayload(), StandardCharsets.UTF_8);
-                System.out.println(actionsResponse);
-                QueryConnectionResults results = gson.fromJson(actionsResponse, QueryConnectionResults.class);
-                if (results.results != null) {
-                    out.addAll(results.results);
-                }
-                return out;
-            }
-
-
+            task.execute(req);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -166,7 +143,6 @@ public class ConnectionsFragment extends Fragment implements DIDExchangeHandler.
     }
 
 
-    @Override
     public void onInvited(String connectionID, String label) {
         DialogFragment connFrag = new AcceptConnectionFragment(connectionID, label);
         connFrag.setTargetFragment(this, 0);
@@ -175,12 +151,18 @@ public class ConnectionsFragment extends Fragment implements DIDExchangeHandler.
 
     @Override
     public void onAcceptConnectionClick(String connectionID) {
-        didExchangeHandler.Continue(connectionID, "");
     }
 
     @Override
     public void onCancelConnectionClick(DialogFragment dialog) {
 
+    }
+
+    @Override
+    public void HandleConnections(ConnectionResult connections) {
+        if (connections.count > 0) {
+            mViewModel.getConnections().setValue(connections.connections);
+        }
     }
 
     private static class ConnectionArrayAdapter extends ArrayAdapter<Connection> {

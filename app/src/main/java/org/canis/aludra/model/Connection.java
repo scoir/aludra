@@ -4,25 +4,19 @@ import androidx.annotation.NonNull;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.util.Date;
+
 public class Connection {
-    @SerializedName("ConnectionID")public String ConnectionID;
-    @SerializedName("State")public String State;
-    @SerializedName("ThreadID")public String ThreadID;
-    @SerializedName("ParentThreadID")public String ParentThreadID;
-    @SerializedName("TheirLabel")public String TheirLabel;
-    @SerializedName("TheirDID")public String TheirDID;
-    @SerializedName("MyDID")public String MyDID;
-    @SerializedName("ServiceEndPoint")public String ServiceEndPoint;
-    @SerializedName("RecipientKeys")public String[] RecipientKeys;
-    @SerializedName("RoutingKeys")public String []RoutingKeys;
-    @SerializedName("InvitationID")public String InvitationID;
-    @SerializedName("InvitationDID")public String InvitationDID;
-    @SerializedName("Implicit")public Boolean Implicit;
-    @SerializedName("Namespace")public String Namespace;
+    @SerializedName("id")public String ConnectionID;
+    @SerializedName("status")public String Status;
+    @SerializedName("name")public String Name;
+    @SerializedName("their_did")public String TheirDID;
+    @SerializedName("my_did")public String MyDID;
+    @SerializedName("last_updated") public Date LastUpdated;
 
     @NonNull
     @Override
     public String toString() {
-        return this.TheirLabel;
+        return this.Name;
     }
 }

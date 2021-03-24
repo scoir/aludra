@@ -2,44 +2,48 @@ package org.canis.aludra;
 
 import android.os.Bundle;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.fragment.app.Fragment;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.crypto.tink.CleartextKeysetHandle;
+import com.google.crypto.tink.JsonKeysetReader;
+import com.google.crypto.tink.KeysetHandle;
+import com.google.crypto.tink.PublicKeySign;
+import com.google.crypto.tink.signature.SignatureConfig;
+import com.google.crypto.tink.subtle.Base64;
+import com.google.crypto.tink.subtle.Ed25519Sign;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
-import org.canis.aludra.ui.connections.ConnectionsFragment;
+
+import org.canis.aludra.model.CloudAgent;
+import org.canis.aludra.model.Registration;
+import org.canis.aludra.service.RegisterTask;
 import org.canis.aludra.ui.connections.ScanInvitationFragment;
-import org.hyperledger.aries.api.AriesController;
-import org.hyperledger.aries.ariesagent.Ariesagent;
-import org.hyperledger.aries.config.Options;
+
+import java.io.File;
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 
 
-public class MainActivity extends AppCompatActivity implements AppBarConfiguration.OnNavigateUpListener {
+public class MainActivity extends AppCompatActivity implements AppBarConfiguration.OnNavigateUpListener, RegisterTask.RegisterTaskHandler {
 
-    AriesController agent;
     AppBarConfiguration appBarConfiguration;
     ScanInvitationFragment.ScanInvitationListener scanInvitationListener;
+
+    private String CloudAgentId;
+    private Ed25519Sign.KeyPair signKeyPair;
+    private Ed25519Sign.KeyPair nextKeyPair;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Options opts = new Options();
-        opts.setUseLocalAgent(false);
-        opts.setLogLevel("INFO");
-        opts.setAgentURL("http://10.0.2.2:5533");
-        opts.setWebsocketURL("ws://10.0.2.2:5533/ws");
-
-        try {
-            agent = Ariesagent.new_(opts);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
 
         setContentView(R.layout.activity_main);
         BottomNavigationView navView = findViewById(R.id.nav_view);
@@ -50,6 +54,43 @@ public class MainActivity extends AppCompatActivity implements AppBarConfigurati
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(navView, navController);
 
+        try {
+            SignatureConfig.register();
+
+            this.signKeyPair = Ed25519Sign.KeyPair.newKeyPair();
+            byte[] signPubKeyBytes = signKeyPair.getPublicKey();
+
+            this.nextKeyPair = Ed25519Sign.KeyPair.newKeyPair();
+            byte[] nextPubKeyBytes = nextKeyPair.getPublicKey();
+
+            String encodedSignKey = Base64.encodeToString(signPubKeyBytes, Base64.DEFAULT | Base64.NO_WRAP);
+            String encodedNextKey = Base64.encodeToString(nextPubKeyBytes, Base64.DEFAULT | Base64.NO_WRAP);
+
+            Registration reg = new Registration(
+                    encodedSignKey,
+                    encodedNextKey,
+                    "ArwXoACJgOleVZ2PY7kXn7rA0II0mHYDhc6WrBH8fDAc"
+            );
+
+            GsonBuilder gsonb = new GsonBuilder();
+            Gson gson = gsonb.create();
+            String json = gson.toJson(reg);
+
+            RegisterTask task = new RegisterTask(this);
+            task.execute(reg);
+
+        } catch (GeneralSecurityException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public byte[] Sign(byte[] data) throws GeneralSecurityException {
+        Ed25519Sign signer = new Ed25519Sign(this.signKeyPair.getPrivateKey());
+        return signer.sign(data);
+    }
+
+    public String getCloudAgentId() {
+        return this.CloudAgentId;
     }
 
     @Override
@@ -67,8 +108,8 @@ public class MainActivity extends AppCompatActivity implements AppBarConfigurati
         return scanInvitationListener;
     }
 
-    public AriesController getAgent() {
-        return agent;
+    @Override
+    public void HandleCloudAgent(CloudAgent cloudAgent) {
+        this.CloudAgentId = cloudAgent.cloudAgentId;
     }
-
 }
