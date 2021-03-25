@@ -27,7 +27,7 @@ public class RegisterTask extends AsyncTask<Registration, Void, CloudAgent> {
     @Override
     protected CloudAgent doInBackground(Registration... registrations) {
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("https://canis.scoir.ninja/")
+                .baseUrl("http://10.0.2.2:11004/")
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
 

@@ -36,7 +36,7 @@ public class ListConnectionsTask extends AsyncTask<ConnectionRequest, Void, Conn
     @Override
     protected ConnectionResult doInBackground(ConnectionRequest... reqs) {
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("https://canis.scoir.ninja")
+                .baseUrl("http://10.0.2.2:11004")
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
 

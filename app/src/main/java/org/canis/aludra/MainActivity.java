@@ -18,20 +18,26 @@ import com.google.gson.GsonBuilder;
 
 import org.canis.aludra.model.CloudAgent;
 import org.canis.aludra.model.Registration;
+import org.canis.aludra.model.Wallet;
 import org.canis.aludra.service.RegisterTask;
 import org.canis.aludra.ui.connections.ScanInvitationFragment;
 
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.security.GeneralSecurityException;
 
 
-public class MainActivity extends AppCompatActivity implements AppBarConfiguration.OnNavigateUpListener, RegisterTask.RegisterTaskHandler {
+public class MainActivity extends AppCompatActivity implements AppBarConfiguration.OnNavigateUpListener,
+        RegisterTask.RegisterTaskHandler {
+
+    private static String WALLET_FILE_NAME = "wallet.json";
 
     AppBarConfiguration appBarConfiguration;
     ScanInvitationFragment.ScanInvitationListener scanInvitationListener;
 
-    private String CloudAgentId;
-    private Ed25519Sign.KeyPair signKeyPair;
-    private Ed25519Sign.KeyPair nextKeyPair;
+    private Wallet wallet;
 
 
     @Override
@@ -48,27 +54,48 @@ public class MainActivity extends AppCompatActivity implements AppBarConfigurati
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(navView, navController);
 
+        this.wallet = new Wallet();
+
+        try {
+            InputStream in = this.openFileInput(WALLET_FILE_NAME);
+            GsonBuilder gsonb = new GsonBuilder();
+            Gson gson = gsonb.disableHtmlEscaping().create();
+
+            this.wallet = gson.fromJson(new InputStreamReader(in), Wallet.class);
+
+        } catch (FileNotFoundException e) {
+            System.out.println("*****************************************************************");
+            System.out.println("exception finding file, initializing cloud agent");
+            System.out.println("*****************************************************************");
+            initializeCloudAgent();
+        }
+
+    }
+
+    private void initializeCloudAgent() {
         try {
             SignatureConfig.register();
 
-            this.signKeyPair = Ed25519Sign.KeyPair.newKeyPair();
+
+            Ed25519Sign.KeyPair signKeyPair = Ed25519Sign.KeyPair.newKeyPair();
             byte[] signPubKeyBytes = signKeyPair.getPublicKey();
+            byte[] signPrivKeyBytes = signKeyPair.getPrivateKey();
 
-            this.nextKeyPair = Ed25519Sign.KeyPair.newKeyPair();
+            Ed25519Sign.KeyPair nextKeyPair = Ed25519Sign.KeyPair.newKeyPair();
             byte[] nextPubKeyBytes = nextKeyPair.getPublicKey();
+            byte[] nextPrivKeyBytes = nextKeyPair.getPrivateKey();
 
-            String encodedSignKey = Base64.encodeToString(signPubKeyBytes, Base64.DEFAULT | Base64.NO_WRAP);
-            String encodedNextKey = Base64.encodeToString(nextPubKeyBytes, Base64.DEFAULT | Base64.NO_WRAP);
+            this.wallet.publicSigningKey = Base64.encodeToString(signPubKeyBytes, Base64.DEFAULT | Base64.NO_WRAP);
+            this.wallet.publicNextKey = Base64.encodeToString(nextPubKeyBytes, Base64.DEFAULT | Base64.NO_WRAP);
+
+            this.wallet.privateSigningKey = Base64.encodeToString(signPrivKeyBytes, Base64.DEFAULT | Base64.NO_WRAP);
+            this.wallet.privateNextKey = Base64.encodeToString(nextPrivKeyBytes, Base64.DEFAULT | Base64.NO_WRAP);
 
             Registration reg = new Registration(
-                    encodedSignKey,
-                    encodedNextKey,
+                    this.wallet.publicSigningKey,
+                    this.wallet.publicNextKey,
                     "ArwXoACJgOleVZ2PY7kXn7rA0II0mHYDhc6WrBH8fDAc"
             );
-
-            GsonBuilder gsonb = new GsonBuilder();
-            Gson gson = gsonb.create();
-            String json = gson.toJson(reg);
 
             RegisterTask task = new RegisterTask(this);
             task.execute(reg);
@@ -79,12 +106,13 @@ public class MainActivity extends AppCompatActivity implements AppBarConfigurati
     }
 
     public byte[] Sign(byte[] data) throws GeneralSecurityException {
-        Ed25519Sign signer = new Ed25519Sign(this.signKeyPair.getPrivateKey());
+        byte[] privKey = Base64.decode(this.wallet.privateSigningKey, Base64.DEFAULT | Base64.NO_WRAP);
+        Ed25519Sign signer = new Ed25519Sign(privKey);
         return signer.sign(data);
     }
 
     public String getCloudAgentId() {
-        return this.CloudAgentId;
+        return this.wallet.cloudAgentId;
     }
 
     @Override
@@ -104,6 +132,19 @@ public class MainActivity extends AppCompatActivity implements AppBarConfigurati
 
     @Override
     public void HandleCloudAgent(CloudAgent cloudAgent) {
-        this.CloudAgentId = cloudAgent.cloudAgentId;
+        this.wallet.cloudAgentId = cloudAgent.cloudAgentId;
+
+        GsonBuilder gsonb = new GsonBuilder();
+        Gson gson = gsonb.disableHtmlEscaping().create();
+        String json = gson.toJson(this.wallet);
+
+        try {
+            OutputStream out = this.openFileOutput(WALLET_FILE_NAME, MODE_APPEND);
+            out.write(json.getBytes());
+            out.flush();
+            out.close();
+        }catch(Exception e) {
+            e.printStackTrace();
+        }
     }
 }

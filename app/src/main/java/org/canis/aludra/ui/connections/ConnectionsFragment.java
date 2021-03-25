@@ -67,7 +67,7 @@ public class ConnectionsFragment extends Fragment implements AcceptConnectionFra
         fab.setOnClickListener(view -> {
             //Calling with the result of the scanned barcode.  Short circuited here because my barcode scanner isn't working
             //Navigation.findNavController(view).navigate(R.id.action_connections_to_scan);
-            this.onScanSuccess("eyJAaWQiOiI2OTJkM2EyYS1jZThmLTQ4OTItYTBlYi0wMDVmNjliNDFhZWMiLCJsYWJlbCI6IlNwcmluZ2ZpZWxkIEhpZ2ggU2Nob29sIiwiZGlkIjoiZGlkOnNvdjo0c3BrUFl1UThoRHR3ejd4NFhXTWFhIiwiQHR5cGUiOiJodHRwczovL2RpZGNvbW0ub3JnL2RpZGV4Y2hhbmdlLzEuMC9pbnZpdGF0aW9uIn0=");
+            this.onScanSuccess("eyJAaWQiOiJkNTg3Y2E3ZC0xNjViLTQ3ODMtYTc2MC1kNzEzNmQxODU5NWUiLCJsYWJlbCI6IlNwcmluZ2ZpZWxkIEhpZ2ggU2Nob29sIiwiZGlkIjoiZGlkOnNvdjpLbjJxWTd1NnJuWEQ2c1JFZEtETHZUIiwiQHR5cGUiOiJodHRwczovL2RpZGNvbW0ub3JnL2RpZGV4Y2hhbmdlLzEuMC9pbnZpdGF0aW9uIn0=");
         });
 
         mViewModel = new ViewModelProvider(this).get(ConnectionsViewModel.class);
@@ -120,7 +120,7 @@ public class ConnectionsFragment extends Fragment implements AcceptConnectionFra
 
     }
 
-    public List<Connection> getConnections() {
+    public void getConnections() {
 
         MainActivity mainActivity = (MainActivity) getActivity();
         assert mainActivity != null;
@@ -144,7 +144,7 @@ public class ConnectionsFragment extends Fragment implements AcceptConnectionFra
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return out;
+
     }
 
 

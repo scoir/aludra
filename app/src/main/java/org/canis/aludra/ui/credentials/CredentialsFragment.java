@@ -17,16 +17,30 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.google.crypto.tink.subtle.Base64;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 import org.canis.aludra.MainActivity;
 import org.canis.aludra.R;
+import org.canis.aludra.model.AcceptCredentialResult;
 import org.canis.aludra.model.Credential;
+import org.canis.aludra.model.CredentialRequest;
+import org.canis.aludra.model.CredentialResult;
+import org.canis.aludra.model.Invitation;
+import org.canis.aludra.service.AcceptCredentialTask;
+import org.canis.aludra.service.AcceptInvitationTask;
+import org.canis.aludra.service.ListCredentialsTask;
 
+import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
-public class CredentialsFragment extends Fragment implements CredentialOfferFragment.OfferDialogListener {
+public class CredentialsFragment extends Fragment implements CredentialOfferFragment.OfferDialogListener,
+        ListCredentialsTask.ListCredentialsTaskHandler, AcceptCredentialTask.AcceptCredentialTaskHandler {
 
     private CredentialsViewModel mViewModel;
     private CredentialsFragment.CredentialArrayAdapter adapter;
@@ -51,14 +65,24 @@ public class CredentialsFragment extends Fragment implements CredentialOfferFrag
             @Override
             public void onItemClick(AdapterView<?> parent, final View view,
                                     int position, long id) {
-//                view.animate().setDuration(2000).alpha(0)
-//                        .withEndAction(new Runnable() {
-//                            @Override
-//                            public void run() {
-//                                adapter.notifyDataSetChanged();
-//                                view.setAlpha(1);
-//                            }
-//                        });
+                try {
+                    Credential cred = mViewModel.getCredentials().getValue().get(position);
+                    MainActivity mainActivity = (MainActivity) getActivity();
+                    assert mainActivity != null;
+
+                    byte[] signature = new byte[0];
+                    signature = mainActivity.Sign("{}".getBytes(StandardCharsets.UTF_8));
+
+                    AcceptCredentialTask task = new AcceptCredentialTask(
+                            CredentialsFragment.this,
+                            mainActivity.getCloudAgentId(),
+                            Base64.encodeToString(signature, Base64.URL_SAFE | Base64.NO_WRAP)
+                    );
+
+                    task.execute(cred);
+                } catch (GeneralSecurityException e) {
+                    e.printStackTrace();
+                }
             }
 
         });
@@ -77,6 +101,7 @@ public class CredentialsFragment extends Fragment implements CredentialOfferFrag
 
 
         try {
+            getCredentials();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -91,7 +116,7 @@ public class CredentialsFragment extends Fragment implements CredentialOfferFrag
     }
 
     public void accepted(String piid) {
-        mViewModel.getCredentials().setValue(getCredentials());
+        getCredentials();
     }
 
     @Override
@@ -103,6 +128,16 @@ public class CredentialsFragment extends Fragment implements CredentialOfferFrag
 
     }
 
+    @Override
+    public void HandleCredentials(CredentialResult result) {
+        mViewModel.getCredentials().setValue(result.credentials);
+    }
+
+    @Override
+    public void HandleConnections(AcceptCredentialResult result) {
+        getCredentials();
+    }
+
 
     private static class CredentialArrayAdapter extends ArrayAdapter<Credential> {
 
@@ -112,8 +147,8 @@ public class CredentialsFragment extends Fragment implements CredentialOfferFrag
                                       List<Credential> objects) {
             super(context, textViewResourceId, objects);
             for (int i = 0; i < objects.size(); ++i) {
-                Credential conn = objects.get(i);
-                System.out.println(conn.Name + " : " + conn.SNID + " : " + conn.MyDID + " : " + conn.TheirDID);
+                Credential cred = objects.get(i);
+                System.out.println(cred.Comment + " : " + cred.id + " : " + cred.MyDID + " : " + cred.TheirDID);
                 mIdMap.put(objects.get(i), i);
             }
         }
@@ -122,7 +157,7 @@ public class CredentialsFragment extends Fragment implements CredentialOfferFrag
         public long getItemId(int position) {
             Credential item = getItem(position);
             Integer pos = mIdMap.get(item);
-            if(pos == null) {
+            if (pos == null) {
                 return -1;
             }
 
@@ -136,35 +171,30 @@ public class CredentialsFragment extends Fragment implements CredentialOfferFrag
         }
     }
 
-    public List<Credential> getCredentials() {
+    public void getCredentials() {
 
-        ArrayList<Credential> out = new ArrayList<>();
-//        try {
-//
-//            byte[] data = "{}".getBytes(StandardCharsets.UTF_8);
-//            ResponseEnvelope resp = verifiableController.getCredentials(new RequestEnvelope(data));
-//
-//            if (resp.getError() != null) {
-//                CommandError err = resp.getError();
-//                System.out.println(err.toString());
-//            } else {
-//                GsonBuilder gsonb = new GsonBuilder();
-//                Gson gson = gsonb.create();
-//
-//                String actionsResponse = new String(resp.getPayload(), StandardCharsets.UTF_8);
-//                System.out.println(actionsResponse);
-//                QueryCredentialResults results = gson.fromJson(actionsResponse, QueryCredentialResults.class);
-//                if (results.results != null) {
-//                    out.addAll(results.results);
-//                }
-//                return out;
-//            }
-//
-//
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-        return out;
+        MainActivity mainActivity = (MainActivity) getActivity();
+        assert mainActivity != null;
+
+        CredentialRequest req = new CredentialRequest();
+        GsonBuilder gsonb = new GsonBuilder();
+        Gson gson = gsonb.disableHtmlEscaping().create();
+        String json = gson.toJson(req);
+
+        List<Credential> out = new ArrayList<>();
+        try {
+            byte[] signature = mainActivity.Sign(json.getBytes(StandardCharsets.UTF_8));
+
+            ListCredentialsTask task = new ListCredentialsTask(
+                    this,
+                    mainActivity.getCloudAgentId(),
+                    Base64.encodeToString(signature, Base64.URL_SAFE | Base64.NO_WRAP)
+            );
+
+            task.execute(req);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 

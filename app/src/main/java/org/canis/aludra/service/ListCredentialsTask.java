@@ -2,9 +2,10 @@ package org.canis.aludra.service;
 
 import android.os.AsyncTask;
 
-import org.canis.aludra.R;
-import org.canis.aludra.model.Invitation;
-import org.canis.aludra.model.InvitationResult;
+import org.canis.aludra.model.ConnectionRequest;
+import org.canis.aludra.model.ConnectionResult;
+import org.canis.aludra.model.CredentialRequest;
+import org.canis.aludra.model.CredentialResult;
 
 import java.io.IOException;
 
@@ -13,18 +14,18 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-public class AcceptInvitationTask extends AsyncTask<Invitation, Void, InvitationResult> {
+public class ListCredentialsTask extends AsyncTask<CredentialRequest, Void, CredentialResult> {
 
-    public interface AcceptInvitationTaskHandler {
-        void HandleConnections(InvitationResult result);
+    public interface ListCredentialsTaskHandler {
+        void HandleCredentials(CredentialResult result);
     }
 
-    private final AcceptInvitationTaskHandler handler;
+    private final ListCredentialsTaskHandler handler;
 
     private String cloudAgentId;
     private String signature;
 
-    public AcceptInvitationTask(AcceptInvitationTaskHandler handler, String cloudAgentId, String signature) {
+    public ListCredentialsTask(ListCredentialsTaskHandler handler, String cloudAgentId, String signature) {
         this.handler = handler;
         this.cloudAgentId = cloudAgentId;
         this.signature = signature;
@@ -32,7 +33,7 @@ public class AcceptInvitationTask extends AsyncTask<Invitation, Void, Invitation
 
 
     @Override
-    protected InvitationResult doInBackground(Invitation... invites) {
+    protected CredentialResult doInBackground(CredentialRequest... reqs) {
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl("http://10.0.2.2:11004")
                 .addConverterFactory(GsonConverterFactory.create())
@@ -40,9 +41,9 @@ public class AcceptInvitationTask extends AsyncTask<Invitation, Void, Invitation
 
         CanisService service = retrofit.create(CanisService.class);
 
-        Call<InvitationResult> call = service.AcceptInvitation(this.cloudAgentId, this.signature, invites[0]);
+        Call<CredentialResult> call = service.ListCredentials(this.cloudAgentId, this.signature, reqs[0]);
         try {
-            Response<InvitationResult> resp = call.execute();
+            Response<CredentialResult> resp = call.execute();
             if (resp.isSuccessful()) {
                 return resp.body();
             } else {
@@ -56,9 +57,8 @@ public class AcceptInvitationTask extends AsyncTask<Invitation, Void, Invitation
     }
 
     @Override
-    protected void onPostExecute(InvitationResult result) {
+    protected void onPostExecute(CredentialResult result) {
         super.onPostExecute(result);
-
-        this.handler.HandleConnections(result);
+        this.handler.HandleCredentials(result);
     }
 }
